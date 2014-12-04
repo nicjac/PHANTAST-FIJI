@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+		http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>org.scijava</groupId>
+		<artifactId>pom-scijava</artifactId>
+		<version>1.127</version>
+	</parent>
+
+	<groupId>PHANTAST</groupId>
+	<artifactId>PHANTAST_</artifactId>
+	<version>0.1-SNAPSHOT</version>
+
+	<name>Phase Contrast Segmentation Toolbox (PHANTAST)</name>
+
+	<dependencies>
+		<dependency>
+			<groupId>net.imagej</groupId>
+			<artifactId>ij</artifactId>
+			<version>${imagej1.version}</version>
+		</dependency>
+		<dependency>
+	 		<groupId>sc.fiji</groupId>
+	  		<artifactId>fiji-lib</artifactId>
+	  		<version>2.0.0-SNAPSHOT</version>
+		</dependency>		
+		<dependency>
+		  <groupId>net.imglib2</groupId>
+		  <artifactId>imglib2</artifactId>
+		  <version>${imglib2.version}</version>
+		</dependency>
+		<dependency>
+		  <groupId>net.imglib2</groupId>
+		  <artifactId>imglib2-ij</artifactId>
+		  <version>${imglib2.version}</version>
+		</dependency>
+	<dependency>
+  		<groupId>net.imglib2</groupId>
+ 		 <artifactId>imglib2-algorithms</artifactId>
+  		<version>${imglib2.version}</version>
+	</dependency>
+		
+	</dependencies>
+
+	<build>
+		<resources>
+			<resource>
+				<directory>${basedir}/src/main/resources</directory>
+			</resource>
+			<resource>
+				<directory>${project.build.sourceDirectory}</directory>
+			</resource>
+		</resources>
+		<testResources>
+			<testResource>
+				<directory>${basedir}/src/test/resources</directory>
+			</testResource>
+			<testResource>
+				<directory>${project.build.testSourceDirectory}</directory>
+			</testResource>
+		</testResources>
+		<plugins>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>exec-maven-plugin</artifactId>
+				<executions>
+					<execution>
+						<goals>
+							<goal>java</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<mainClass>PHANTAST_</mainClass>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+
+	<developers>
+		<developer>
+			<id>nicjac</id>
+			<name>Nicolas Jaccard</name>
+			<email>nicolas.jaccard@gmail.com</email>
+			<url>http://www.nicjac.net</url>
+			<organization>University College London</organization>
+			<organizationUrl>http://www.ucl.ac.uk</organizationUrl>
+			<roles>
+				<role>architect</role>
+				<role>developer</role>
+			</roles>
+			<timezone>-6</timezone>
+		</developer>
+	</developers>
+
+	<!-- NB: for project parent -->
+	<repositories>
+		<repository>
+			<id>imagej.releases</id>
+			<url>http://maven.imagej.net/content/repositories/releases</url>
+		</repository>
+		<repository>
+			<id>imagej.snapshots</id>
+			<url>http://maven.imagej.net/content/repositories/snapshots</url>
+		</repository>
+	</repositories>
+
+	<scm>
+		<connection>scm:git:git://github.com/imagej/minimal-ij1-plugin</connection>
+		<developerConnection>scm:git:git@github.com:imagej/minimal-ij1-plugin</developerConnection>
+		<tag>HEAD</tag>
+		<url>https://github.com/imagej/minimal-ij1-plugin</url>
+	</scm>
+
+	<organization>
+		<name>University College London</name>
+		<url>http://www.ucl.ac.uk</url>
+	</organization>
+	<description>The phae contrast segmentation toolbox (PHANTAST) enables high performance segmentation of phase contrast microscopy images</description>
+	<url>http://phantast.googlecode.com</url>
+</project>
