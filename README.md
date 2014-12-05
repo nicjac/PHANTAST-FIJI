@@ -20,6 +20,7 @@ Getting started
   * You can get in touch with us through various means:
     * Use the [issue page](https://github.com/nicjac/PHANTAST-FIJI/issues) to report problems with the plugin
     * Head to the [getting in touch page](https://github.com/nicjac/PHANTAST-FIJI/wiki/Getting-in-touch) for more traditional contact means  
+  * If MATLAB is more your thing (or if you are after a standalone GUI version of PHANTAST), you can have a look at [PHANTAST for MATLAB](https://github.com/nicjac/PHANTAST-MATLAB), which offers similar functionality to that of the FIJI plugin
 
 More about PHANTAST
 -------------------
