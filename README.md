@@ -15,14 +15,11 @@ PHANTAST was first described in an [open-access paper](http://onlinelibrary.wile
 Getting started
 ---------------
 
-  * The [Downloads] pages contains the information you need to download the various implementations of PHANTAST.
-  * The wiki contains useful information about how to start generating quantitative data:
-    * [MATLAB] outlines how to get started with the MATLAB implementation (either using the command line or the graphical user interface)
-    * [FIJIPlugin] describes how to install and use the FIJI/ImageJ implementation of PHANTAST  
-  * Head to the [https://code.google.com/p/phantast/source/checkout Source] page to check out the source code of the various implementations
+  * Head to the [release page](https://github.com/nicjac/PHANTAST-FIJI/releases) and download the latest release of the plugin. Alternatively, you can checkout the code and build it yourself.
+  * The wiki contains a [tutorial to get you started with PHANTAST for FIJI](https://github.com/nicjac/PHANTAST-FIJI/wiki/PHANTAST-FIJI-plugin-tutorial)
   * You can get in touch with us through various means:
-    * Use the [https://code.google.com/p/phantast/issues/list issues] page
-    * Head to the [Contact contact us] page for more traditional contact means  
+    * Use the [issue page](https://github.com/nicjac/PHANTAST-FIJI/issues) to report problems with the plugin
+    * Head to the [getting in touch page](https://github.com/nicjac/PHANTAST-FIJI/wiki/Getting-in-touch) for more traditional contact means  
 
 More about PHANTAST
 -------------------
