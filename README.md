@@ -14,18 +14,16 @@ PHANTAST was first described in an [open-access paper](http://onlinelibrary.wile
 
 Getting started
 ---------------
-
   * Head to the [release page](https://github.com/nicjac/PHANTAST-FIJI/releases) and download the latest release of the plugin. Alternatively, you can checkout the code and build it yourself.
   * The wiki contains a [tutorial to get you started with PHANTAST for FIJI](https://github.com/nicjac/PHANTAST-FIJI/wiki/PHANTAST-FIJI-plugin-tutorial)
   * You can get in touch with us through various means:
     * Use the [issue page](https://github.com/nicjac/PHANTAST-FIJI/issues) to report problems with the plugin
     * Head to the [getting in touch page](https://github.com/nicjac/PHANTAST-FIJI/wiki/Getting-in-touch) for more traditional contact means  
   * If MATLAB is more your thing (or if you are after a standalone GUI version of PHANTAST), you can have a look at [PHANTAST for MATLAB](https://github.com/nicjac/PHANTAST-MATLAB), which offers similar functionality to that of the FIJI plugin
-  * If you use PHANTAST for your research, please consider [citing our papers](https://github.com/nicjac/PHANTAST-MATLAB/wiki/How-to-cite-PHANTAST)
+  * If you use PHANTAST for your research, please consider [citing our papers](https://github.com/nicjac/PHANTAST-FIJI/wiki/How-to-cite-PHANTAST)
 
 More about PHANTAST
 -------------------
-
 ![alt text](https://github.com/nicjac/phantast/blob/gh-pages/images/Example.png "Example of PCM image segmentation using PHANTAST")
 
 Generating quantitative data from PCM images is generally a tedious experience. Manual processing is time-consuming and error-prone while the use of general purpose image processing software package can be frustrating due to their complexity and the need to tweak parameters.
