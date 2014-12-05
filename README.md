@@ -1,4 +1,4 @@
-PHANTAST
+PHANTAST for FIJI
 ========
 
 The phase contrast microscopy segmentation toolbox (PHANTAST) is a collection of open-source algorithms and tools for the processing of phase contrast microscopy (PCM) images. It was developed at [University College London](http://www.ucl.ac.uk)'s [department of Biochemical Engineering](http://www.ucl.ac.uk/biochemeng) and [CoMPLEX](http://www.ucl.ac.uk/complex).
