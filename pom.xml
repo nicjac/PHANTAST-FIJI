@@ -6,9 +6,10 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
-		<groupId>org.scijava</groupId>
-		<artifactId>pom-scijava</artifactId>
-		<version>1.127</version>
+		<groupId>sc.fiji</groupId>
+		<artifactId>pom-fiji</artifactId>
+		<version>6.1.3</version>
+		<relativePath />
 	</parent>
 
 	<groupId>PHANTAST</groupId>
@@ -21,29 +22,23 @@
 		<dependency>
 			<groupId>net.imagej</groupId>
 			<artifactId>ij</artifactId>
-			<version>${imagej1.version}</version>
 		</dependency>
 		<dependency>
-	 		<groupId>sc.fiji</groupId>
-	  		<artifactId>fiji-lib</artifactId>
-	  		<version>2.1.0</version>
+			<groupId>sc.fiji</groupId>
+			<artifactId>fiji-lib</artifactId>
 		</dependency>		
 		<dependency>
-		  <groupId>net.imglib2</groupId>
-		  <artifactId>imglib2</artifactId>
-		  <version>${imglib2.version}</version>
+			<groupId>net.imglib2</groupId>
+			<artifactId>imglib2</artifactId>
 		</dependency>
 		<dependency>
-		  <groupId>net.imglib2</groupId>
-		  <artifactId>imglib2-ij</artifactId>
-		  <version>${imglib2.version}</version>
+			<groupId>net.imglib2</groupId>
+			<artifactId>imglib2-ij</artifactId>
 		</dependency>
-	<dependency>
-  		<groupId>net.imglib2</groupId>
- 		 <artifactId>imglib2-algorithms</artifactId>
-  		<version>${imglib2.version}</version>
-	</dependency>
-		
+		<dependency>
+			<groupId>net.imglib2</groupId>
+			<artifactId>imglib2-algorithm</artifactId>
+		</dependency>
 	</dependencies>
 
 	<developers>
