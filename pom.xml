@@ -17,29 +17,12 @@
 	<version>0.2</version>
 
 	<name>Phase Contrast Segmentation Toolbox (PHANTAST)</name>
-
-	<dependencies>
-		<dependency>
-			<groupId>net.imagej</groupId>
-			<artifactId>ij</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>sc.fiji</groupId>
-			<artifactId>fiji-lib</artifactId>
-		</dependency>		
-		<dependency>
-			<groupId>net.imglib2</groupId>
-			<artifactId>imglib2</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>net.imglib2</groupId>
-			<artifactId>imglib2-ij</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>net.imglib2</groupId>
-			<artifactId>imglib2-algorithm</artifactId>
-		</dependency>
-	</dependencies>
+	<description>The phae contrast segmentation toolbox (PHANTAST) enables high performance segmentation of phase contrast microscopy images</description>
+	<url>http://phantast.googlecode.com</url>
+	<organization>
+		<name>University College London</name>
+		<url>http://www.ucl.ac.uk</url>
+	</organization>
 
 	<developers>
 		<developer>
@@ -57,6 +40,13 @@
 		</developer>
 	</developers>
 
+	<scm>
+		<connection>scm:git:git://github.com/nicjac/PHANTAST-FIJI</connection>
+		<developerConnection>scm:git:git@github.com:nicjac/PHANTAST-FIJI</developerConnection>
+		<tag>HEAD</tag>
+		<url>https://github.com/nicjac/PHANTAST-FIJI</url>
+	</scm>
+
 	<repositories>
 		<!-- NB: for project parent -->
 		<repository>
@@ -65,17 +55,27 @@
 		</repository>
 	</repositories>
 
-	<scm>
-		<connection>scm:git:git://github.com/nicjac/PHANTAST-FIJI</connection>
-		<developerConnection>scm:git:git@github.com:nicjac/PHANTAST-FIJI</developerConnection>
-		<tag>HEAD</tag>
-		<url>https://github.com/nicjac/PHANTAST-FIJI</url>
-	</scm>
+	<dependencies>
+		<dependency>
+			<groupId>net.imagej</groupId>
+			<artifactId>ij</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>fiji-lib</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>net.imglib2</groupId>
+			<artifactId>imglib2</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>net.imglib2</groupId>
+			<artifactId>imglib2-ij</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>net.imglib2</groupId>
+			<artifactId>imglib2-algorithm</artifactId>
+		</dependency>
+	</dependencies>
 
-	<organization>
-		<name>University College London</name>
-		<url>http://www.ucl.ac.uk</url>
-	</organization>
-	<description>The phae contrast segmentation toolbox (PHANTAST) enables high performance segmentation of phase contrast microscopy images</description>
-	<url>http://phantast.googlecode.com</url>
 </project>
