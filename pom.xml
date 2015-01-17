@@ -6,9 +6,10 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
-		<groupId>org.scijava</groupId>
-		<artifactId>pom-scijava</artifactId>
-		<version>1.127</version>
+		<groupId>sc.fiji</groupId>
+		<artifactId>pom-fiji</artifactId>
+		<version>6.1.3</version>
+		<relativePath />
 	</parent>
 
 	<groupId>PHANTAST</groupId>
@@ -16,70 +17,12 @@
 	<version>0.2</version>
 
 	<name>Phase Contrast Segmentation Toolbox (PHANTAST)</name>
-
-	<dependencies>
-		<dependency>
-			<groupId>net.imagej</groupId>
-			<artifactId>ij</artifactId>
-			<version>${imagej1.version}</version>
-		</dependency>
-		<dependency>
-	 		<groupId>sc.fiji</groupId>
-	  		<artifactId>fiji-lib</artifactId>
-	  		<version>2.1.0</version>
-		</dependency>		
-		<dependency>
-		  <groupId>net.imglib2</groupId>
-		  <artifactId>imglib2</artifactId>
-		  <version>${imglib2.version}</version>
-		</dependency>
-		<dependency>
-		  <groupId>net.imglib2</groupId>
-		  <artifactId>imglib2-ij</artifactId>
-		  <version>${imglib2.version}</version>
-		</dependency>
-	<dependency>
-  		<groupId>net.imglib2</groupId>
- 		 <artifactId>imglib2-algorithms</artifactId>
-  		<version>${imglib2.version}</version>
-	</dependency>
-		
-	</dependencies>
-
-	<build>
-		<resources>
-			<resource>
-				<directory>${basedir}/src/main/resources</directory>
-			</resource>
-			<resource>
-				<directory>${project.build.sourceDirectory}</directory>
-			</resource>
-		</resources>
-		<testResources>
-			<testResource>
-				<directory>${basedir}/src/test/resources</directory>
-			</testResource>
-			<testResource>
-				<directory>${project.build.testSourceDirectory}</directory>
-			</testResource>
-		</testResources>
-		<plugins>
-			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>exec-maven-plugin</artifactId>
-				<executions>
-					<execution>
-						<goals>
-							<goal>java</goal>
-						</goals>
-					</execution>
-				</executions>
-				<configuration>
-					<mainClass>PHANTAST_</mainClass>
-				</configuration>
-			</plugin>
-		</plugins>
-	</build>
+	<description>The phae contrast segmentation toolbox (PHANTAST) enables high performance segmentation of phase contrast microscopy images</description>
+	<url>http://phantast.googlecode.com</url>
+	<organization>
+		<name>University College London</name>
+		<url>http://www.ucl.ac.uk</url>
+	</organization>
 
 	<developers>
 		<developer>
@@ -97,29 +40,42 @@
 		</developer>
 	</developers>
 
-	<!-- NB: for project parent -->
+	<scm>
+		<connection>scm:git:git://github.com/nicjac/PHANTAST-FIJI</connection>
+		<developerConnection>scm:git:git@github.com:nicjac/PHANTAST-FIJI</developerConnection>
+		<tag>HEAD</tag>
+		<url>https://github.com/nicjac/PHANTAST-FIJI</url>
+	</scm>
+
 	<repositories>
+		<!-- NB: for project parent -->
 		<repository>
-			<id>imagej.releases</id>
-			<url>http://maven.imagej.net/content/repositories/releases</url>
-		</repository>
-		<repository>
-			<id>imagej.snapshots</id>
-			<url>http://maven.imagej.net/content/repositories/snapshots</url>
+			<id>imagej.public</id>
+			<url>http://maven.imagej.net/content/groups/public</url>
 		</repository>
 	</repositories>
 
-	<scm>
-		<connection>scm:git:git://github.com/imagej/minimal-ij1-plugin</connection>
-		<developerConnection>scm:git:git@github.com:imagej/minimal-ij1-plugin</developerConnection>
-		<tag>HEAD</tag>
-		<url>https://github.com/imagej/minimal-ij1-plugin</url>
-	</scm>
+	<dependencies>
+		<dependency>
+			<groupId>net.imagej</groupId>
+			<artifactId>ij</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>fiji-lib</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>net.imglib2</groupId>
+			<artifactId>imglib2</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>net.imglib2</groupId>
+			<artifactId>imglib2-ij</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>net.imglib2</groupId>
+			<artifactId>imglib2-algorithm</artifactId>
+		</dependency>
+	</dependencies>
 
-	<organization>
-		<name>University College London</name>
-		<url>http://www.ucl.ac.uk</url>
-	</organization>
-	<description>The phae contrast segmentation toolbox (PHANTAST) enables high performance segmentation of phase contrast microscopy images</description>
-	<url>http://phantast.googlecode.com</url>
 </project>
