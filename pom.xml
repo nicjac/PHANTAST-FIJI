@@ -38,6 +38,19 @@
 			</roles>
 			<timezone>-6</timezone>
 		</developer>
+		<developer>
+			<id>oburri</id>
+			<name>Olivier Burri</name>
+			<email>olivier.burri@gmail.com</email>
+			<url>https://biop.epfl.ch/INFO_Facility.html</url>
+			<organization>Ecole Polytechnique Fédérale de Lausanne</organization>
+			<organizationUrl>https://epfl.ch</organizationUrl>
+			<roles>
+				<role>architect</role>
+				<role>developer</role>
+			</roles>
+			<timezone>+1</timezone>
+		</developer>
 	</developers>
 
 	<scm>
