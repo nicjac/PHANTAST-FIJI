@@ -1,6 +1,23 @@
 /*
  * PHANTAST - Plugin for FIJI
  * 
+ * December 2017: Modifications by Olivier Burri 
+ * BioImaging And Optics Platform (BIOP)
+ * Ecole Polytechnique Fédérale
+ * 
+ * Adds corrections to bugs from previous versions
+ * 1. Input images were required to be 32-bit
+ * 		Mended code to handle 32-conversion internally
+ * 2. When processing stacks, output would produce either a single mask image or a single selection
+ * 		Added code to add selections to ROI manager and to create mask stack when needed
+ * 3. Slice numbers were not appended to the results when working on stacks
+ * 		Adds a new "Slice" column to the results table
+ * 4. With stacks, it is useful to test parameters on multiple slices
+ * 		Adds a slider to the dialog box so that the user can choose the slice for preview 
+ * 5. Last run preferences were not saved
+ * 		Uses Prefs class to store preferences of the last time the user clicked OK
+ * 
+ * 
 Copyright (c) 2013, Nicolas Jaccard
 
 Department of Biochemical Engineering, UCL
@@ -37,17 +54,17 @@ POSSIBILITY OF SUCH DAMAGE.
 */
 import ij.ImagePlus;
 import ij.IJ;
+import ij.ImageJ;
 
 import java.awt.*;
 
 import ij.gui.GenericDialog;
+import ij.gui.Overlay;
 import ij.plugin.filter.ExtendedPlugInFilter;
 import ij.plugin.filter.PlugInFilterRunner;
+import ij.plugin.frame.RoiManager;
 import ij.gui.DialogListener;
-import ij.Macro;
-
-import java.awt.Font;
-
+import ij.Prefs;
 import ij.process.ImageProcessor;
 import ij.process.BinaryProcessor;
 import ij.process.ByteProcessor;
@@ -83,23 +100,25 @@ import java.util.*;
 @SuppressWarnings("deprecation")
 public class PHANTAST_<T extends RealType<T> & NativeType<T>> implements ExtendedPlugInFilter,DialogListener  {
 	protected ImagePlus inputImage;
-	private ImagePlus previewImage;
+	
+	private ImagePlus maskImage;
+	
 	private double sigma = 1.2;
 	private double epsilon = 0.03;
 	private boolean doHaloCorrection = true;;
-	private boolean cancel = false;
-	private boolean ok = false;
 	private boolean previewing = false;
 	private boolean computeConfluency = false;
-
+	private int slider=1;
+	private String prefix = "phantast.plugin.";
+	
 	private int nPasses; // Total number of passes
 	private int pass; // Current pass
 	private boolean outputSelection;
 	private boolean outputMask;
 	
 	
-	private String[] outputs = {"Binary mask", "Image with ROI"};
-	int flags = DOES_32;
+	int flags = DOES_8G+DOES_16+DOES_32+FINAL_PROCESSING; // Add possibility to work on 8 and 16-bit images, we do the conversion ourselves
+	
 	int[][] projectionCones = new int[][] 
 	{{1, 2, 8},
 	 {2, 1, 3},
@@ -130,16 +149,70 @@ public class PHANTAST_<T extends RealType<T> & NativeType<T>> implements Extende
          {0,1},    //SOUTH 7
          {1,1}};   //SOUTH EAST 8
 
+		private Overlay ov;
+
 	/**
 	 * @see ij.plugin.filter.PlugInFilter#setup(java.lang.String, ij.ImagePlus)
 	 */
 	@Override
 	public int setup(String arg, ImagePlus imp) {
 		//IJ.run("PHANTAST ", "sigma=1.20 epsilon=0.03 output=[Binary mask]");
-		// does not handle RGB, since the wrapped type is ARGBType (not a RealType)
+		// does not handle RGB, since the wrapped type is ARGBType (not a RealType)	
+		if(arg.equals("final")) {
+			if (ov.size() > 1) {
+				// If we asked for the output selection, add it to the ROI manager
+				IJ.run("To ROI Manager", "");
+			} else if (ov.size()==1){
+				imp.setRoi(ov.get(0));
+			}
+			
+			// If we ask for the mask, we should output the ImagePlus
+			if(outputMask) {
+				maskImage.show();
+			}
+			imp.setOverlay(null);
+		}
+		if (imp == null) {
+			IJ.error("No image open");
+			return DONE;
+		}
+		
+		// Store the image during setup rather than during dialog display... 
+		this.inputImage= imp;
+		
+		// Read from the stored preferences. Avoids tedious work of remembering the last settings.
+		readSettings();
+		
+		// Create an overlay to hold the results
+		ov = new Overlay();
+		
 		return flags;
 	}
 
+	/**
+	 * Read in the settings from a previous run.
+	 */
+	private void readSettings() {
+		sigma   		 = Prefs.get(prefix+"sigma", sigma);
+		epsilon 		 = Prefs.get(prefix+"epsilon", epsilon);
+		doHaloCorrection = Prefs.get(prefix+"do.halo", doHaloCorrection);
+		computeConfluency= Prefs.get(prefix+"do.confluency", computeConfluency);
+		outputSelection	 = Prefs.get(prefix+"do.selection", outputSelection);
+		outputMask		 = Prefs.get(prefix+"do.mask", outputMask);		
+	}
+	
+	/**
+	 * Save in the settings from a the current run.
+	 */
+	private void saveSettings() {
+		// Save new values to IJ.Prefs
+		Prefs.set(prefix+"sigma", sigma);
+		Prefs.set(prefix+"epsilon", epsilon);
+		Prefs.set(prefix+"do.halo", doHaloCorrection);
+		Prefs.set(prefix+"do.confluency", computeConfluency);
+		Prefs.set(prefix+"do.selection", outputSelection);
+		Prefs.set(prefix+"do.mask", outputMask);					
+	}
 
 	// Used to set number of calls(progress bar)
 	public void setNPasses(int nPasses) {
@@ -151,25 +224,26 @@ public class PHANTAST_<T extends RealType<T> & NativeType<T>> implements Extende
 	 * As the class implements DialogListener, this method is called whenever a setting is changed
 	 */
 	public boolean dialogItemChanged(GenericDialog gd, AWTEvent e) {   
-		sigma = (double)gd.getNextNumber();
-		epsilon = (double)gd.getNextNumber();	
-		doHaloCorrection = gd.getNextBoolean();
+		sigma   		  = (double)gd.getNextNumber();
+		epsilon 		  = (double)gd.getNextNumber();	
+		doHaloCorrection  = gd.getNextBoolean();
 		computeConfluency = gd.getNextBoolean();
-		outputSelection = gd.getNextBoolean();
-		outputMask = gd.getNextBoolean();
-	        previewing = gd.getPreviewCheckbox().getState();       
-	        return true;
-    	}
+		outputSelection   = gd.getNextBoolean();
+		outputMask        = gd.getNextBoolean();
+	    if(inputImage.getStackSize() > 1) {
+	    	slider = (int) gd.getNextNumber();
+	    }
+		previewing        = gd.getPreviewCheckbox().getState();       
+	    
+	    return true;
+    }
 
       	/**
         * Automatically called by ExtendedPlugInFilter, displays the setting dialog
         * When done, run(ImageProcessor) will be automatically called
         */
 	public int showDialog(ImagePlus imp, String command, PlugInFilterRunner pfr) {
-		inputImage = imp;
-		String options = Macro.getOptions();
 
-		
 		GenericDialog gd = new GenericDialog("PHANTAST Settings", IJ.getInstance());
 		gd.addMessage("SEGMENTATION PARAMETERS",new Font("",Font.BOLD,12));
 		gd.addMessage("Local contrast thresholding",new Font("",Font.ITALIC,12));
@@ -179,110 +253,140 @@ public class PHANTAST_<T extends RealType<T> & NativeType<T>> implements Extende
 		gd.addCheckbox("Do halo correction",doHaloCorrection);
 		gd.addMessage("OUTPUT OPTIONS",new Font("",Font.BOLD,12));
 		gd.addMessage("Measurements",new Font("",Font.ITALIC,12));
-		gd.addCheckbox("Compute confluency", false);
+		gd.addCheckbox("Compute confluency", computeConfluency);
 		gd.addMessage("Image output",new Font("",Font.ITALIC,12));
-		gd.addCheckbox("Selection overlay on original image", false);
-		gd.addCheckbox("New mask image", false);
+		gd.addCheckbox("Selection overlay on original image", outputSelection);
+		gd.addCheckbox("New mask image", outputMask);
 		gd.addMessage("");
+		if(imp.getStackSize() >1) {
+			gd.addSlider("Preview Slice", 0, imp.getStackSize(), 1);
+		}
 		gd.addPreviewCheckbox(pfr);
-        	gd.addDialogListener(this);
+        gd.addDialogListener(this);
 		
 		gd.showDialog();
 		
-		flags = IJ.setupDialog(imp, flags); //ask whether to process all slices of stack (if a stack)
 		
-		if(gd.wasOKed()){
-	            ok = true;            
-	            return flags;
-	        }else{
-	            ok = false;
-	            flags = DONE;
-	        }
-	        if(gd.wasCanceled()){
-	            cancel = true;
-	            flags = DONE;
-	        }else{
-	            cancel = false;
-	        }
-	        
-        	return flags;
-	}
+	    if(gd.wasCanceled()){
+	        // Check if we need to do some cleanup, on the overlay
+	    	imp.setOverlay(null);
+	    	return DONE;
+	    }else{
+			flags = IJ.setupDialog(imp, flags); //ask whether to process all slices of stack (if a stack)
+
+	    	sigma = (double)gd.getNextNumber();
+			epsilon = (double)gd.getNextNumber();	
+			doHaloCorrection = gd.getNextBoolean();
+			computeConfluency = gd.getNextBoolean();
+			outputSelection = gd.getNextBoolean();
+			outputMask = gd.getNextBoolean();
+		    previewing = false; // This avoids issues with the checkbox still being selected... 
+		    saveSettings();
+	    	return flags;
+	    	
+	    }
+	              }
+
 
 	/**
 	 * @see ij.plugin.filter.PlugInFilter#run(ij.process.ImageProcessor)
 	 */
 	@Override
 	public void run(ImageProcessor ip) {
-		run(new ImagePlus(inputImage.getTitle(),ip.duplicate())); // Convert IP to ImagePlus
-	}
-	
-	/**
-	 * This should have been the method declared in PlugInFilter...
-	 */
-	public void run(ImagePlus image) {
-
-	        if (null == image) {
-	            IJ.error("PHANTAST", "No images are open.");
-	            return;
-	        }
-	        
-		pass++;
+		
+		// This should do the work on the given ImageProcessor directly, because when you convert it to imagePlus, everything gets overwritten when working with stacks.
+		// if it's a stack, the PlugInFilter should work to assemble an image in the end
+		int slice = slider; //inputImage.getSlice();
+		inputImage.setSlice(slice);
+		if(!previewing || nPasses > 1) {
+			pass++;
+			slice = pass;
+		}
 		
 		String imageTitle;
-		if(inputImage.getStack().getSize() >1) imageTitle = inputImage.getStack().getSliceLabel(pass);
-		else imageTitle = inputImage.getTitle();
 		
+		// Decide on the name of the image based on the number of passes (meaning, is it a stack)
+		
+		if(inputImage.getStack().getSize() >1 && nPasses==1) {
+			imageTitle = inputImage.getStack().getSliceLabel(slice);
+			
+			if(imageTitle == null) { imageTitle = inputImage.getTitle()+" Slice "+slice; } // Avoid having "null" as a name in case there is no slice label
+		
+		} else {
+			imageTitle = inputImage.getTitle();
+		}
+		ImagePlus image = new ImagePlus(imageTitle, ip.convertToFloat());
+
 		// Convert the image to imglib2 Img format
-		Img<T> img = ImagePlusAdapter.wrap(image.duplicate());
+		Img<T> img = ImageJFunctions.wrap(image);
 
 		// Apply local contrast filter
-		final Img< T > localContrast = getLocalContrastImage(img, sigma);
+		final Img<T> localContrast = getLocalContrastImage(img, sigma);
 
 		// Threshold the resulting image
-		Img< UnsignedByteType > LCThresholded = thresholdImage(localContrast,epsilon);
+		Img<UnsignedByteType> LCThresholded = thresholdImage(localContrast,epsilon);
 		LCThresholded = removeSmallObjectsAndFillHoles(LCThresholded);
 
 		if(doHaloCorrection) haloCorrection(LCThresholded,image);
 
-		ImageProcessor ipPreview;
 
 		ImagePlus LCThresholdedIP = ImageJFunctions.wrap(LCThresholded,"ResultImage");
 
-		int previewWindows = 0;
+		
+		// Create the selection
+		IJ.run(LCThresholdedIP,"Convert to Mask", "method=Li background=Dark");
+		IJ.runPlugIn(LCThresholdedIP,"ij.plugin.filter.ThresholdToSelection", "");
+		Roi resultRoi = LCThresholdedIP.getRoi();
+		resultRoi.setPosition(slice);
+		resultRoi.setName("Slice "+IJ.pad(slice,3));
+		
+		// Prepare outputs
+				
+		if(outputMask) {
+			// This is the output mask for the current slice so we should save it somewhere and display it later
+			// for a preview, we could show the current one as an overlay, and avoid having images.
+			// The issue is that when the preview
+			if(previewing) {
+				inputImage.setOverlay(null);
+				Overlay ov = new Overlay();
+				resultRoi.setFillColor(new Color(255,255,255));
+				ov.add(resultRoi);
+				inputImage.setOverlay(ov);
+			}
+
+			if(nPasses > 1) {
+				if(maskImage == null || maskImage.getStackSize() != nPasses) {
+					maskImage = inputImage.createHyperStack(imageTitle+"- Output Mask", 1, nPasses, 1, 8);
+					maskImage.setTitle(imageTitle+"- Output Mask");
+				}
+				maskImage.getStack().setProcessor(LCThresholdedIP.getProcessor().duplicate(), slice);
+			} else {
+				maskImage = new ImagePlus(imageTitle+"- Output Mask", LCThresholdedIP.duplicate().getProcessor());
+			}
+ 		}
 		
 		if(outputSelection)
 		{
-			IJ.run(LCThresholdedIP,"Convert to Mask", "method=Li background=Dark");
-			IJ.runPlugIn(LCThresholdedIP,"ij.plugin.filter.ThresholdToSelection", "");
-			Roi resultRoi = LCThresholdedIP.getRoi();
-			inputImage.setRoi(resultRoi);	
+			if(previewing || slice==1) {// Do it as an Overlay
+				inputImage.setOverlay(null);
+				ov = new Overlay();
+			}
+			
+			ov.add(resultRoi);
+			inputImage.setOverlay(ov);
 			inputImage.show();
 		}
-
 		
-		if(outputMask)
-		{
-			previewWindows++;
-			
-			ipPreview = LCThresholdedIP.duplicate().getProcessor();
-			if(previewImage==null)
-			{
-				previewImage = new ImagePlus("PHANTAST - " + imageTitle,ipPreview);
-				previewImage.show();
-			}
-			else previewImage.setProcessor(ipPreview);		
-		}
-
-
-		if(!previewing) {
+		if(!previewing || nPasses > 1) {
 			if(computeConfluency)
 			{
 				ResultsTable rt = ResultsTable.getResultsTable();
 
 				rt.incrementCounter();
-				rt.addLabel("ImageName", imageTitle);
+				rt.addLabel("Image Name", imageTitle);
+				if(inputImage.getImageStackSize() > 1) rt.addValue("Slice", slice);
 				rt.addValue("Confluency",computeConfluency(LCThresholded));
-		
+				
 				rt.show("Results");
 			}
 		}
@@ -343,12 +447,12 @@ public class PHANTAST_<T extends RealType<T> & NativeType<T>> implements Extende
 				boolean validPath = false;
 	
 				// Get current position index
-				currentPosition = (int[])pixelsToProcess.get(i);
+				currentPosition = pixelsToProcess.get(i);
 	
 				r.setPosition( (int)currentPosition[0], 0 );
 	            		r.setPosition( (int)currentPosition[1], 1 );
 	
-	            		final UnsignedByteType currentDirection = (UnsignedByteType)r.get();
+	            		final UnsignedByteType currentDirection = r.get();
 	
 				int[] currentDirectionCone = projectionCones[(int)currentDirection.getInteger()];
 	
@@ -412,18 +516,21 @@ public class PHANTAST_<T extends RealType<T> & NativeType<T>> implements Extende
 				go = false;
 			}
 		}
+		
 	}
+	
+	
 
 	double computeConfluency (Img<UnsignedByteType> img)
 	{
-		Cursor c = img.cursor();		
+		Cursor<UnsignedByteType> c = img.cursor();		
 
 		double onPixels = 0;
 		double offPixels = 0;
 		
 		while (c.hasNext())
 		{
-			IntegerType t = (IntegerType)c.next();
+			IntegerType<?> t = c.next();
 			
 			if(t.getInteger()==255)
 			{
@@ -506,12 +613,12 @@ public class PHANTAST_<T extends RealType<T> & NativeType<T>> implements Extende
 		for(int i=0;i<maskPixels.size();i++)
 		{
 			// Get current position index
-			currentPosition = (int[])maskPixels.get(i);
+			currentPosition = maskPixels.get(i);
 	
 			r.setPosition( (int)currentPosition[0], 0 );
 	    		r.setPosition( (int)currentPosition[1], 1 );
 
-	    		final RealType t = r.get();
+	    		final RealType<T> t = r.get();
 	    		t.setReal(outlineValue);
 		}
 
@@ -579,7 +686,7 @@ public class PHANTAST_<T extends RealType<T> & NativeType<T>> implements Extende
 		final Img<UnsignedByteType> directionImage = imgFactory.create(dim,new UnsignedByteType());
 		//final Img< T > directionImage = imgFactory.create(dim,new RealType());
 		
-		Cursor cDirection = directionImage.cursor();
+		Cursor<UnsignedByteType> cDirection = directionImage.cursor();
 		
 		while (c1.hasNext())
 		{
@@ -593,7 +700,7 @@ public class PHANTAST_<T extends RealType<T> & NativeType<T>> implements Extende
 			t[6] = (RealType)c7.next();
 			t[7] = (RealType)c8.next();
 
-			RealType tDirection = (UnsignedByteType)cDirection.next();
+			RealType tDirection = cDirection.next();
 
 			float max = 0f;
 			int kernelId = 0;
@@ -621,9 +728,9 @@ public class PHANTAST_<T extends RealType<T> & NativeType<T>> implements Extende
 
 	public < T extends RealType< T > & NativeType< T > > ArrayList<int[]> getOutlinePixels(Img<T> img)
 	{
-		ArrayList<int[]> outlinePixelsIndices = new ArrayList();
+		ArrayList<int[]> outlinePixelsIndices = new ArrayList<int[]>();
 
-		Cursor c = img.cursor();		
+		Cursor<T> c = img.cursor();		
 
 		while (c.hasNext())
 		{
@@ -653,15 +760,15 @@ public class PHANTAST_<T extends RealType<T> & NativeType<T>> implements Extende
 		final Img< UnsignedByteType > tmpImage = imgFactory.create( dim, new UnsignedByteType() );
 	
 		// Create a cursor for both images
-		Cursor c1 = img.cursor();
-		Cursor c2 = tmpImage.cursor();
+		Cursor<T> c1 = img.cursor();
+		Cursor<UnsignedByteType> c2 = tmpImage.cursor();
 		
 		// do for all pixels
 		while ( c1.hasNext() )
 		{
 			// get value of both imgs
-			RealType t1 = (RealType)c1.next();
-			RealType t2 = (RealType)c2.next();
+			RealType t1 = c1.next();
+			RealType t2 = c2.next();
 
 			// overwrite img1 with the result
 
@@ -692,13 +799,13 @@ public class PHANTAST_<T extends RealType<T> & NativeType<T>> implements Extende
 		//write("lol");
 
 		// Create a cursor for both images
-		Cursor c1 = img.cursor();
+		Cursor<T> c1 = img.cursor();
 		
 		// do for all pixels
 		while ( c1.hasNext() )
 		{
 			// get value of both imgs
-			RealType t1 = (RealType)c1.next();
+			RealType t1 = c1.next();
 
 			// overwrite img1 with the result
 			t1.setReal( t1.getRealFloat() / max.getRealFloat() );
@@ -746,17 +853,17 @@ public class PHANTAST_<T extends RealType<T> & NativeType<T>> implements Extende
 		final Img< T > tmpImage = imgFactory.create( img1, img1.firstElement() );
 		
 		// Create a cursor for both images
-		Cursor c1 = img1.cursor();
-		Cursor c2 = img2.cursor();
-		Cursor c3 = tmpImage.cursor();
+		Cursor<T> c1 = img1.cursor();
+		Cursor<T> c2 = img2.cursor();
+		Cursor<T> c3 = tmpImage.cursor();
 		
 		// do for all pixels
 		while ( c1.hasNext() )
 		{
 			// get value of both imgs
-			RealType t1 = (RealType)c1.next();
-			RealType t2 = (RealType)c2.next();
-			RealType t3 = (RealType)c3.next();
+			RealType t1 = c1.next();
+			RealType t2 = c2.next();
+			RealType t3 = c3.next();
 
 			// overwrite img1 with the result
 			t3.setReal( t1.getRealFloat() * t2.getRealFloat() );
@@ -774,17 +881,17 @@ public class PHANTAST_<T extends RealType<T> & NativeType<T>> implements Extende
 		final Img< T > tmpImage = imgFactory.create( img1, img1.firstElement() );
 		
 		// Create a cblurGaussianblurGaussianursor for both images
-		Cursor c1 = img1.cursor();
-		Cursor c2 = img2.cursor();
-		Cursor c3 = tmpImage.cursor();
+		Cursor<T> c1 = img1.cursor();
+		Cursor<T> c2 = img2.cursor();
+		Cursor<T> c3 = tmpImage.cursor();
 		
 		// do for all pixels
 		while ( c1.hasNext() )
 		{
 			// get value of both imgs
-			RealType t1 = (RealType)c1.next();
-			RealType t2 = (RealType)c2.next();
-			RealType t3 = (RealType)c3.next();
+			RealType t1 = c1.next();
+			RealType t2 = c2.next();
+			RealType t3 = c3.next();
 
 			if(t2.getRealFloat()>0)
 			{
@@ -808,17 +915,17 @@ public class PHANTAST_<T extends RealType<T> & NativeType<T>> implements Extende
 		final Img< T > tmpImage = imgFactory.create( img1, img1.firstElement() );
 		
 		// Create a cursor for both images
-		Cursor c1 = img1.cursor();
-		Cursor c2 = img2.cursor();
-		Cursor c3 = tmpImage.cursor();
+		Cursor<T> c1 = img1.cursor();
+		Cursor<T> c2 = img2.cursor();
+		Cursor<T> c3 = tmpImage.cursor();
 		
 		// do for all pixels
 		while ( c1.hasNext() )
 		{
 			// get value of both imgs
-			RealType t1 = (RealType)c1.next();
-			RealType t2 = (RealType)c2.next();
-			RealType t3 = (RealType)c3.next();
+			RealType t1 = c1.next();
+			RealType t2 = c2.next();
+			RealType t3 = c3.next();
 
 			if(t2.getRealFloat()>0)
 			{
@@ -842,15 +949,15 @@ public class PHANTAST_<T extends RealType<T> & NativeType<T>> implements Extende
 		final Img< T > tmpImage = imgFactory.create( img, img.firstElement() );
 		
 		// Create a cursor for both images
-		Cursor c1 = img.cursor();
-		Cursor c2 = tmpImage.cursor();
+		Cursor<T> c1 = img.cursor();
+		Cursor<T> c2 = tmpImage.cursor();
 		
 		// do for all pixels
 		while ( c1.hasNext() )
 		{
 			// get value of both imgs
-			RealType t1 = (RealType)c1.next();
-			RealType t2 = (RealType)c2.next();
+			RealType t1 = c1.next();
+			RealType t2 = c2.next();
 
 			// overwrite img1 with the result
 			//t2.setReal( Math.sqrt(t1.getRealFloat()));
@@ -860,6 +967,27 @@ public class PHANTAST_<T extends RealType<T> & NativeType<T>> implements Extende
 
 		return tmpImage;
 	}
+	
+	/**
+	 * Quick test method to run directly in IDE
+	 */
+	public static void main(String[] args) {     
+		// set the plugins.dir property to make the plugin appear in the Plugins menu
+		Class<?> clazz = PHANTAST_.class;
+		String url = clazz.getResource("/" + clazz.getName().replace('.', '/') + ".class").toString();
+		String pluginsDir = url.substring("file:".length(), url.length() - clazz.getName().length() - ".class".length());
+		System.setProperty("plugins.dir", pluginsDir);
+		
+		ImageJ ij = new ImageJ();
+		ij.exitWhenQuitting(true);
+		
+		ImagePlus imp = IJ.openImage("D:\\Phase_Tests\\003 TRANS-5.tif");
+		imp.show();
+		RoiManager rm =  new RoiManager();
+
+		IJ.run("PHANTAST ", "");
+    }
+	
 	
 }
 
