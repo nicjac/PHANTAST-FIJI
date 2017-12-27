@@ -234,7 +234,8 @@ public class PHANTAST_<T extends RealType<T> & NativeType<T>> implements Extende
 	    	slider = (int) gd.getNextNumber();
 	    }
 		previewing        = gd.getPreviewCheckbox().getState();       
-	    
+		   
+		if( sigma == 0.0 || epsilon == 0.0 || Double.isNaN(sigma) ||  Double.isNaN(epsilon) ) return false;
 	    return true;
     }
 
