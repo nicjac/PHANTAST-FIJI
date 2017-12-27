@@ -14,7 +14,7 @@
 
 	<groupId>PHANTAST</groupId>
 	<artifactId>PHANTAST_</artifactId>
-	<version>0.2</version>
+	<version>0.3</version>
 
 	<name>Phase Contrast Segmentation Toolbox (PHANTAST)</name>
 	<description>The phae contrast segmentation toolbox (PHANTAST) enables high performance segmentation of phase contrast microscopy images</description>
