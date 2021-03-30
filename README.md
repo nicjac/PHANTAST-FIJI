@@ -1,3 +1,14 @@
+# Looking for maintainer(s)!
+
+Hi everyone 👋
+
+Unfortunately, I haven't had time to look after this repository for a (long) while. However, based on citations and traffic to repositories, I see there is still interest in PHANTAST. If you would like to become a maintainer, please create an issue here on Github, or email me: hello [AT] nicjac [DOT] dev.
+
+I hope you find this code useful. Thanks!
+
+----------
+
+
 PHANTAST for FIJI
 ========
 
